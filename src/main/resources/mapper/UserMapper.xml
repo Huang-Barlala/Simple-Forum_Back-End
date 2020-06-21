@@ -317,4 +317,11 @@
       TopicNum = #{topicnum,jdbcType=INTEGER}
     where Id = #{id,jdbcType=INTEGER}
   </update>
+
+  <select id="selectByUsername" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from User
+    where UserName = #{username,jdbcType=VARCHAR}
+  </select>
 </mapper>
