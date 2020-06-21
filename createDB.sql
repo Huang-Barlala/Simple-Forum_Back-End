@@ -3,84 +3,93 @@
 -- Model: New Model    Version: 1.0
 -- MySQL Workbench Forward Engineering
 
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+SET @OLD_UNIQUE_CHECKS = @@UNIQUE_CHECKS, UNIQUE_CHECKS = 0;
+SET @OLD_FOREIGN_KEY_CHECKS = @@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS = 0;
+SET @OLD_SQL_MODE = @@SQL_MODE, SQL_MODE =
+        'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
 -- -----------------------------------------------------
--- Schema FOURM
+-- Schema FORUM
 -- -----------------------------------------------------
 
 -- -----------------------------------------------------
--- Schema FOURM
+-- Schema FORUM
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `FOURM` ;
-USE `FOURM` ;
+CREATE SCHEMA IF NOT EXISTS `FORUM`;
+USE `FORUM`;
 
 -- -----------------------------------------------------
--- Table `FOURM`.`Reply`
+-- Table `FORUM`.`Reply`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `FOURM`.`Reply` ;
+DROP TABLE IF EXISTS `FORUM`.`Reply`;
 
-CREATE TABLE IF NOT EXISTS `FOURM`.`Reply` (
-  `Id` INT NOT NULL,
-  `TopicId` INT NOT NULL,
-  `UserId` INT NOT NULL,
-  `Content` TEXT NULL,
-  `CreateTime` TIMESTAMP NOT NULL,
-  `ModifyTime` TIMESTAMP NOT NULL,
-  `Serial` INT NOT NULL,
-  PRIMARY KEY (`Id`))
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `FOURM`.`Section`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `FOURM`.`Section` ;
-
-CREATE TABLE IF NOT EXISTS `FOURM`.`Section` (
-  `Id` INT NOT NULL,
-  `Name` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`Id`))
-ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS `FORUM`.`Reply`
+(
+    `Id`         INT       NOT NULL,
+    `TopicId`    INT       NOT NULL,
+    `UserId`     INT       NOT NULL,
+    `Content`    TEXT      NULL,
+    `CreateTime` TIMESTAMP NOT NULL,
+    `ModifyTime` TIMESTAMP NOT NULL,
+    `Serial`     INT       NOT NULL,
+    PRIMARY KEY (`Id`)
+)
+    ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `FOURM`.`Topic`
+-- Table `FORUM`.`Section`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `FOURM`.`Topic` ;
+DROP TABLE IF EXISTS `FORUM`.`Section`;
 
-CREATE TABLE IF NOT EXISTS `FOURM`.`Topic` (
-  `Id` INT NOT NULL,
-  `SectionId` INT NOT NULL,
-  `UserId` INT NOT NULL,
-  `Title` VARCHAR(255) NOT NULL,
-  `Content` TEXT NULL,
-  `CreateTime` TIMESTAMP NOT NULL,
-  `ModifyTime` TIMESTAMP NOT NULL,
-  `ReplyTime` TIMESTAMP NOT NULL,
-  PRIMARY KEY (`Id`))
-ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS `FORUM`.`Section`
+(
+    `Id`   INT         NOT NULL,
+    `Name` VARCHAR(45) NOT NULL,
+    PRIMARY KEY (`Id`)
+)
+    ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `FOURM`.`User`
+-- Table `FORUM`.`Topic`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `FOURM`.`User` ;
+DROP TABLE IF EXISTS `FORUM`.`Topic`;
 
-CREATE TABLE IF NOT EXISTS `FOURM`.`User` (
-  `Id` INT NOT NULL,
-  `UserName` VARCHAR(45) NOT NULL,
-  `Password` VARCHAR(45) NOT NULL,
-  `Email` VARCHAR(255) NULL,
-  `CreateTime` TIMESTAMP NOT NULL,
-  `AvatarUrl` VARCHAR(255) NULL,
-  `TopicNum` INT NOT NULL,
-  PRIMARY KEY (`Id`))
-ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS `FORUM`.`Topic`
+(
+    `Id`         INT          NOT NULL,
+    `SectionId`  INT          NOT NULL,
+    `UserId`     INT          NOT NULL,
+    `Title`      VARCHAR(255) NOT NULL,
+    `Content`    TEXT         NULL,
+    `CreateTime` TIMESTAMP    NOT NULL,
+    `ModifyTime` TIMESTAMP    NOT NULL,
+    `ReplyTime`  TIMESTAMP    NOT NULL,
+    PRIMARY KEY (`Id`)
+)
+    ENGINE = InnoDB;
 
 
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- -----------------------------------------------------
+-- Table `FORUM`.`User`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `FORUM`.`User`;
+
+CREATE TABLE IF NOT EXISTS `FORUM`.`User`
+(
+    `Id`         INT          NOT NULL,
+    `UserName`   VARCHAR(45)  NOT NULL,
+    `Password`   VARCHAR(45)  NOT NULL,
+    `Email`      VARCHAR(255) NULL,
+    `CreateTime` TIMESTAMP    NOT NULL,
+    `AvatarUrl`  VARCHAR(255) NULL,
+    `TopicNum`   INT          NOT NULL,
+    PRIMARY KEY (`Id`)
+)
+    ENGINE = InnoDB;
+
+
+SET SQL_MODE = @OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS = @OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS = @OLD_UNIQUE_CHECKS;
