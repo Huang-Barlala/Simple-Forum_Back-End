@@ -2,16 +2,14 @@ package com.barlala.forum.service;
 
 import com.barlala.forum.dao.UserMapper;
 import com.barlala.forum.entity.User;
-import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.barlala.forum.entity.UserExample;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author Barlala
@@ -32,35 +30,25 @@ public class UserService {
         this.response = response;
     }
 
-    public ResultJson<Object> loginByUsername(String username, String password) {
-        User user = userMapper.selectByUsername(username);
+    public ResultJson<Object> login(boolean isUsername, String certificate, String password) {
+        UserExample userExample = new UserExample();
+        if (isUsername) {
+            userExample.or().andUsernameEqualTo(certificate);
+        } else {
+            userExample.or().andEmailEqualTo(certificate);
+        }
+        List<User> user = userMapper.selectByExample(userExample);
         if (user != null) {
-            if (password.equals(user.getPassword())) {
-                Cookie cookie = new Cookie("jwt", authenticationService.createToken(user));
+            if (password.equals(user.get(0).getPassword())) {
+                Cookie cookie = new Cookie("jwt", authenticationService.createToken(user.get(0)));
                 cookie.setMaxAge(86400);
                 response.addCookie(cookie);
                 return new ResultJson<>(HttpStatus.OK);
             } else {
-                return new ResultJson<>(HttpStatus.BAD_REQUEST, "用户名或密码错误");
+                return new ResultJson<>(HttpStatus.BAD_REQUEST, "用户名/邮箱或密码错误");
             }
         } else {
             return new ResultJson<>(HttpStatus.BAD_REQUEST, "用户不存在");
-        }
-    }
-
-    public ResultJson<Object> loginByEmail(String email, String password) {
-        User user = userMapper.selectByEmail(email);
-        if (user != null) {
-            if (password.equals(user.getPassword())) {
-                Cookie cookie = new Cookie("jwt", authenticationService.createToken(user));
-                cookie.setMaxAge(86400);
-                response.addCookie(cookie);
-                return new ResultJson<>(HttpStatus.OK);
-            } else {
-                return new ResultJson<>(HttpStatus.BAD_REQUEST, "邮箱或密码错误");
-            }
-        } else {
-            return new ResultJson<>(HttpStatus.BAD_REQUEST, "邮箱不存在");
         }
     }
 

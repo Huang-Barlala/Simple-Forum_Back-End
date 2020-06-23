@@ -50,9 +50,20 @@ public class ResultJson<T> {
         this.msg = msg;
     }
 
+    public ResultJson(HttpStatus status, T data) {
+        this.code = status.value();
+        this.msg = status.getReasonPhrase();
+        this.data = data;
+    }
+
     public ResultJson(int code, String msg) {
         this.code = code;
         this.msg = msg;
     }
 
+    public ResultJson(int code, String msg, T data) {
+        this.code = code;
+        this.msg = msg;
+        this.data = data;
+    }
 }
