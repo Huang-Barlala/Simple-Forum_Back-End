@@ -1,17 +1,19 @@
 package com.barlala.forum.controller;
 
-import com.barlala.forum.dao.UserMapper;
-import com.barlala.forum.entity.User;
+import com.barlala.forum.service.ResultJson;
+import com.barlala.forum.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 
+import javax.servlet.ServletRequest;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,30 +23,47 @@ import java.util.Map;
  * @version 1.0
  * @date 2020/6/21 下午8:23
  */
-@Controller
+@RestController
 public class UserController {
-    final UserMapper userMapper;
-    private Logger logger= LoggerFactory.getLogger(this.getClass());
+    private final UserService userService;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserController(UserMapper userMapper) {
-        this.userMapper = userMapper;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
-    @ResponseBody
-    public Map<String, String> login(@RequestParam(value = "username", required = false) String username, @RequestParam(value = "password", required = false) String password) {
-        Map<String, String> map = new HashMap<>();
-        map.put("status", "fail");
+    public ResultJson<Object> login(
+            @RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "password", required = false) String password,
+            @RequestParam(value = "email", required = false) String email) {
         logger.info("开始处理登录");
-        if (username != null && password != null) {
-            logger.info(username+"and"+password);
-            User user = userMapper.selectByUsername(username);
-            assert user != null;
-            if (password.equals(user.getPassword())) {
-                map.put("status", "success");
+        if (password == null) {
+            return new ResultJson<>(HttpStatus.BAD_REQUEST);
+        } else {
+            if (username != null) {
+                return userService.loginByUsername(username, password);
+            } else if (email != null) {
+                return userService.loginByEmail(email, password);
+            } else {
+                return new ResultJson<>(HttpStatus.BAD_REQUEST);
             }
         }
-        return map;
     }
+
+    @RequestMapping(value = "/logout", method = RequestMethod.GET)
+    public ResultJson<Object> logout(@CookieValue(value = "jwt", required = false) String jwt
+            , HttpServletResponse response) {
+        if (jwt == null) {
+            return new ResultJson<>(HttpStatus.BAD_REQUEST);
+        } else {
+            Cookie cookie = new Cookie("jwt", null);
+            cookie.setMaxAge(0);
+            response.addCookie(cookie);
+            return new ResultJson<>(HttpStatus.OK, "登出成功");
+        }
+    }
+
+
 }

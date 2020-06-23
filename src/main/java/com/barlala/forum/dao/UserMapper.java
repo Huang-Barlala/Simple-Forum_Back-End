@@ -105,4 +105,12 @@ public interface UserMapper {
      * @return User
      */
     User selectByUsername(String username);
+
+    /**
+     * 通过email查找用户
+     *
+     * @param email user email
+     * @return User
+     */
+    User selectByEmail(String email);
 }
