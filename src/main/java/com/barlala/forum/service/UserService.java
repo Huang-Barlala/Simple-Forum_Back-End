@@ -37,19 +37,52 @@ public class UserService {
         } else {
             userExample.or().andEmailEqualTo(certificate);
         }
-        List<User> user = userMapper.selectByExample(userExample);
-        if (user != null) {
-            if (password.equals(user.get(0).getPassword())) {
-                Cookie cookie = new Cookie("jwt", authenticationService.createToken(user.get(0)));
-                cookie.setMaxAge(86400);
-                response.addCookie(cookie);
-                return new ResultJson<>(HttpStatus.OK);
-            } else {
-                return new ResultJson<>(HttpStatus.BAD_REQUEST, "用户名/邮箱或密码错误");
+        try {
+            List<User> user = userMapper.selectByExample(userExample);
+            if (user != null) {
+                if (password.equals(user.get(0).getPassword())) {
+                    Cookie cookie = new Cookie("jwt", authenticationService.createToken(user.get(0)));
+                    cookie.setMaxAge(86400);
+                    cookie.setPath("/");
+                    response.addCookie(cookie);
+                    return new ResultJson<>(HttpStatus.OK);
+                } else {
+                    return new ResultJson<>(HttpStatus.BAD_REQUEST, "用户名/邮箱或密码错误");
+                }
             }
-        } else {
-            return new ResultJson<>(HttpStatus.BAD_REQUEST, "用户不存在");
+        } catch (IndexOutOfBoundsException ignore) {
         }
+        return new ResultJson<>(HttpStatus.BAD_REQUEST, "用户名/邮箱不存在");
     }
 
+    public boolean isUsernameRepeat(String username) {
+        UserExample example = new UserExample();
+        example.or().andUsernameEqualTo(username);
+        List<User> users = userMapper.selectByExample(example);
+        return !users.isEmpty();
+    }
+
+    public boolean isEmailRepeat(String email) {
+        UserExample example = new UserExample();
+        example.or().andEmailEqualTo(email);
+        List<User> users = userMapper.selectByExample(example);
+        return !users.isEmpty();
+    }
+
+    public boolean insertUser(User user) {
+        int success = userMapper.insertSelective(user);
+        return success == 1;
+    }
+
+    public String getUsername(int userId) {
+        User user = userMapper.selectByPrimaryKey(userId);
+        return user == null ? "" : user.getUsername();
+    }
+
+    public void updateTopicNum(int userId) {
+        User user = userMapper.selectByPrimaryKey(userId);
+        int topicNum = user.getTopicnum() + 1;
+        user.setTopicnum(topicNum);
+        userMapper.updateByPrimaryKey(user);
+    }
 }

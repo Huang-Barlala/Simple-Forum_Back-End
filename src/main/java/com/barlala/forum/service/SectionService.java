@@ -17,7 +17,7 @@ import java.util.List;
 @Service
 public class SectionService {
     public List<Section> sectionList = new ArrayList<>();
-    private SectionMapper sectionMapper;
+    private final SectionMapper sectionMapper;
 
     @Autowired
     public SectionService(SectionMapper sectionMapper) {
@@ -39,6 +39,13 @@ public class SectionService {
             }
         }
         return false;
+    }
+
+    public List<Section> getSections(){
+        if (sectionList.isEmpty()){
+            updateSectionList();
+        }
+        return sectionList;
     }
 
 }

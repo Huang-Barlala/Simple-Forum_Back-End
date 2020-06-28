@@ -7,11 +7,14 @@ import com.barlala.forum.service.ResultJson;
 import com.barlala.forum.service.TopicService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotBlank;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Barlala
@@ -19,6 +22,7 @@ import java.util.List;
  * @date 2020/6/23 下午8:32
  */
 @RestController
+@Validated
 public class ReplyController {
     private final ReplyService replyService;
     private final AuthenticationService authenticationService;
@@ -40,6 +44,9 @@ public class ReplyController {
         if (userId == -1) {
             return new ResultJson<>(HttpStatus.BAD_REQUEST, "未登录");
         }
+        if (!topicService.isTopicExist(topicId)) {
+            return new ResultJson<>(HttpStatus.BAD_REQUEST, "主题不存在");
+        }
         Reply reply = new Reply();
         reply.setTopicid(topicId);
         reply.setUserid(userId);
@@ -49,6 +56,7 @@ public class ReplyController {
         reply.setModifytime(now);
         int serial = replyService.getNextSerial(topicId);
         reply.setSerial(serial);
+        reply.setAuthor(authenticationService.getUsername(jwt));
         return replyService.addReply(reply);
     }
 
@@ -58,10 +66,16 @@ public class ReplyController {
         if (!topicService.isTopicExist(topicId)) {
             return new ResultJson<>(HttpStatus.BAD_REQUEST, "主题不存在");
         }
-        if (replyService.isPageOutOfRange(topicId, page)) {
-            return new ResultJson<>(HttpStatus.BAD_REQUEST, "页数超出范围");
-        }
+        long replyNum = replyService.replyNum(topicId);
         List<Reply> replies = replyService.getReply(topicId, page);
-        return new ResultJson<>(HttpStatus.OK, replies);
+        Map<String, Object> map = new HashMap<>();
+        map.put("replyNum", replyNum);
+        map.put("replyData", replies);
+        return new ResultJson<>(HttpStatus.OK, map);
+    }
+
+    @GetMapping(value = "/replyPageNum")
+    public ResultJson<?> replyPageNum(@RequestParam(value = "topicId") int topicId) {
+        return new ResultJson<>(HttpStatus.OK, replyService.replyPages(topicId));
     }
 }

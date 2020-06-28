@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.barlala.forum.entity.User;
@@ -18,7 +19,7 @@ import java.util.Date;
  */
 @Service
 public class AuthenticationService {
-    public static String SECRET = "55lt%%TIIBvl$jdcKU^ESUuG%aEwyErr$VFHDsS0mo4a%mjqlT4fui&*kSqqzpe53FNvSv3ky#$MPCl1^m7*x3$dAo9U8KCN%8s";
+    public static final String SECRET = "55lt%%TIIBvl$jdcKU^ESUuG%aEwyErr$VFHDsS0mo4a%mjqlT4fui&*kSqqzpe53FNvSv3ky#$MPCl1^m7*x3$dAo9U8KCN%8s";
 
     public String createToken(User user) {
         String token = "";
@@ -27,6 +28,7 @@ public class AuthenticationService {
                     .withIssuedAt(new Date())
                     .withExpiresAt(new Date(System.currentTimeMillis() + 86400000))
                     .withClaim("id", user.getId())
+                    .withClaim("username", user.getUsername())
                     .sign(Algorithm.HMAC256(SECRET));
         } catch (JWTCreationException ignored) {
         }
@@ -43,5 +45,15 @@ public class AuthenticationService {
             exception.printStackTrace();
         }
         return id;
+    }
+
+    public String getUsername(String token) {
+        String username = "";
+        try {
+            DecodedJWT jwt = JWT.decode(token);
+            username = jwt.getClaim("username").asString();
+        } catch (JWTDecodeException ignore) {
+        }
+        return username;
     }
 }

@@ -1,10 +1,7 @@
 package com.barlala.forum.controller;
 
 import com.barlala.forum.entity.Topic;
-import com.barlala.forum.service.AuthenticationService;
-import com.barlala.forum.service.ResultJson;
-import com.barlala.forum.service.SectionService;
-import com.barlala.forum.service.TopicService;
+import com.barlala.forum.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -29,7 +26,8 @@ public class TopicController {
     @Autowired
     public TopicController(AuthenticationService authenticationService,
                            SectionService sectionService,
-                           TopicService topicService) {
+                           TopicService topicService,
+                           UserService userService) {
         this.authenticationService = authenticationService;
         this.sectionService = sectionService;
         this.topicService = topicService;
@@ -57,16 +55,38 @@ public class TopicController {
         topic.setCreatetime(now);
         topic.setModifytime(now);
         topic.setReplytime(now);
+        topic.setAuthor(authenticationService.getUsername(jwt));
         return topicService.addTopic(topic);
     }
 
     @GetMapping(value = "/getTopicList")
-    public ResultJson<?> getTopicList(@RequestParam(value = "page") int page,
+    public ResultJson<?> getTopicList(@RequestParam(value = "page", required = false) Integer page,
+                                      @RequestParam(value = "sectionId") int sectionId,
                                       @RequestParam(value = "order", required = false) Integer order) {
-        if (topicService.isPageOutOfRange(page)) {
+        if (!sectionService.isSectionInSectionList(sectionId)) {
+            return new ResultJson<>(HttpStatus.BAD_REQUEST, "分区不存在");
+        }
+        if (page == null) {
+            page = 1;
+        }
+        if (topicService.isPageOutOfRange(sectionId, page)) {
             return new ResultJson<>(HttpStatus.BAD_REQUEST, "页数超出范围");
         }
-        List<Topic> topicList = topicService.getTopicsList(page, order);
+        List<Topic> topicList = topicService.getTopicsList(page, order, sectionId);
         return new ResultJson<>(HttpStatus.OK, topicList);
+    }
+
+    @GetMapping(value = "/topicPageNum")
+    public ResultJson<?> topicPageNum(@RequestParam(value = "sectionId") int sectionId) {
+        return new ResultJson<>(HttpStatus.OK, topicService.topicPages(sectionId));
+    }
+
+    @GetMapping(value = "/getTopic")
+    public ResultJson<?> getTopic(@RequestParam(value = "topicId") int topicId){
+        Topic topic = topicService.getTopic(topicId);
+        if (topic == null) {
+            return new ResultJson<>(HttpStatus.BAD_REQUEST, "Topic不存在");
+        }
+        return new ResultJson<>(HttpStatus.OK, topic);
     }
 }
