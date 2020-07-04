@@ -1,20 +1,18 @@
 package com.barlala.forum.controller;
 
-import com.barlala.forum.service.ResultJson;
+import com.barlala.forum.service.Result;
+import com.barlala.forum.service.ResultUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * @author Barlala
@@ -25,29 +23,14 @@ import java.io.IOException;
 public class FileController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public static byte[] fileToByte(File img) throws Exception {
-        byte[] bytes = null;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            BufferedImage bi;
-            bi = ImageIO.read(img);
-            ImageIO.write(bi, "png", baos);
-            bytes = baos.toByteArray();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            baos.close();
-        }
-        return bytes;
-    }
 
-    @PostMapping(value = "/uploadImage")
+    @PostMapping(value = "/api/uploadImage")
     @ResponseBody
-    public ResultJson<?> uploadImage(@RequestParam(value = "file") MultipartFile file) {
+    public Result<?> uploadImage(@RequestParam(value = "file") MultipartFile file) {
         if (file.isEmpty()) {
-            return new ResultJson<>(HttpStatus.BAD_REQUEST, "上传失败");
+            return ResultUtil.error("上传失败");
         }
-        String fileName = file.getOriginalFilename();
+        String fileName = UUID.randomUUID().toString();
         String filePath = "files/";
         File dest = new File(new File(filePath).getAbsolutePath() + "/" + fileName);
         if (!dest.getParentFile().exists()) {
@@ -56,14 +39,14 @@ public class FileController {
         try {
             file.transferTo(dest);
             logger.info("上传成功" + dest.getName());
-            return new ResultJson<>(200, "上传成功", "http://127.0.0.1:8118/image/" + dest.getName());
+            return ResultUtil.success("/api/image/" + dest.getName());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new ResultJson<>(HttpStatus.BAD_REQUEST, "上传失败");
+        return ResultUtil.error("上传失败");
     }
 
-    @RequestMapping(value = "/image/{imageName}", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_GIF_VALUE, MediaType.IMAGE_PNG_VALUE})
+    @RequestMapping(value = "/api/image/{imageName}", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_GIF_VALUE, MediaType.IMAGE_PNG_VALUE})
     @ResponseBody
     public byte[] getImage(@PathVariable("imageName") String imageName) {
         String path = "files/";

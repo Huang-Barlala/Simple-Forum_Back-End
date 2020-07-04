@@ -5,7 +5,6 @@ import com.barlala.forum.entity.Reply;
 import com.barlala.forum.entity.ReplyExample;
 import com.github.pagehelper.PageHelper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,12 +17,10 @@ import java.util.List;
 @Service
 public class ReplyService {
     private final ReplyMapper replyMapper;
-    private final TopicService topicService;
 
     @Autowired
-    public ReplyService(ReplyMapper replyMapper, TopicService topicService) {
+    public ReplyService(ReplyMapper replyMapper) {
         this.replyMapper = replyMapper;
-        this.topicService = topicService;
     }
 
     public int getNextSerial(int topicId) {
@@ -39,15 +36,12 @@ public class ReplyService {
     }
 
 
-    public ResultJson<?> addReply(Reply reply) {
-        int success = replyMapper.insertSelective(reply);
-        if (success == 1) {
-            topicService.changeReplyTime(reply.getTopicid(), reply.getCreatetime());
-        }
-        return new ResultJson<>(HttpStatus.OK, success == 1 ? "回复成功" : "回复失败");
+    public boolean addReply(Reply reply) {
+        int result = replyMapper.insertSelective(reply);
+        return result == 1;
     }
 
-    public List<Reply> getReply(int topicId, int page) {
+    public List<Reply> getReplyList(int topicId, int page) {
         ReplyExample example = new ReplyExample();
         example.setOrderByClause("Serial ASC");
         example.or().andTopicidEqualTo(topicId);
@@ -55,13 +49,10 @@ public class ReplyService {
         return replyMapper.selectByExampleWithBLOBs(example);
     }
 
-    public List<Reply> getReplyByOffset(int topicId, int offset) {
-        ReplyExample example = new ReplyExample();
-        example.setOrderByClause("Serial ASC");
-        example.or().andTopicidEqualTo(topicId);
-        PageHelper.offsetPage(offset, offset + 20);
-        return replyMapper.selectByExampleWithBLOBs(example);
+    public Reply getReply(int replyId) {
+        return replyMapper.selectByPrimaryKey(replyId);
     }
+
 
     public long replyNum(int topicId) {
         ReplyExample example = new ReplyExample();
@@ -72,5 +63,32 @@ public class ReplyService {
     public long replyPages(int topicId) {
         long replyNum = replyNum(topicId);
         return replyNum / 20 + (replyNum % 20 == 0 ? 0 : 1);
+    }
+
+    public void updateAvatar(int userId, String authorAvatar) {
+        ReplyExample example = new ReplyExample();
+        example.or().andUseridEqualTo(userId);
+        Reply reply = new Reply();
+        reply.setAuthoravatar(authorAvatar);
+        replyMapper.updateByExampleSelective(reply, example);
+    }
+
+    public void updateAuthor(int userId, String author) {
+        ReplyExample example = new ReplyExample();
+        example.or().andUseridEqualTo(userId);
+        Reply reply = new Reply();
+        reply.setAuthor(author);
+        replyMapper.updateByExampleSelective(reply, example);
+    }
+
+    public void deleteReplyByTopic(int topicId) {
+        ReplyExample example = new ReplyExample();
+        example.or().andTopicidEqualTo(topicId);
+        replyMapper.deleteByExample(example);
+    }
+
+    public boolean updateReply(Reply reply) {
+        int result = replyMapper.updateByPrimaryKeySelective(reply);
+        return result == 1;
     }
 }

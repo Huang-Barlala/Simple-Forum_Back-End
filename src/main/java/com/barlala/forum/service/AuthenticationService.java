@@ -10,6 +10,8 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.barlala.forum.entity.User;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 
 /**
@@ -29,6 +31,8 @@ public class AuthenticationService {
                     .withExpiresAt(new Date(System.currentTimeMillis() + 86400000))
                     .withClaim("id", user.getId())
                     .withClaim("username", user.getUsername())
+                    .withClaim("avatar", user.getAvatarurl())
+                    .withClaim("permission", user.getPermission())
                     .sign(Algorithm.HMAC256(SECRET));
         } catch (JWTCreationException ignored) {
         }
@@ -55,5 +59,32 @@ public class AuthenticationService {
         } catch (JWTDecodeException ignore) {
         }
         return username;
+    }
+
+    public String getAvatar(String token) {
+        String avatar = "";
+        try {
+            DecodedJWT jwt = JWT.decode(token);
+            avatar = jwt.getClaim("avatar").asString();
+        } catch (JWTDecodeException ignore) {
+        }
+        return avatar;
+    }
+
+    public String getPermission(String token) {
+        String permission = "";
+        try {
+            DecodedJWT jwt = JWT.decode(token);
+            permission = jwt.getClaim("permission").asString();
+        } catch (JWTDecodeException ignore) {
+        }
+        return permission;
+    }
+
+    public void refreshCookie(User user, HttpServletResponse response) {
+        Cookie cookie = new Cookie("jwt", createToken(user));
+        cookie.setMaxAge(86400);
+        cookie.setPath("/");
+        response.addCookie(cookie);
     }
 }

@@ -5,7 +5,6 @@ import com.barlala.forum.entity.Topic;
 import com.barlala.forum.entity.TopicExample;
 import com.github.pagehelper.PageHelper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -21,20 +20,15 @@ public class TopicService {
     private final String[] clause = new String[]{"CreateTime ASC", "CreateTime DESC", "ModifyTime ASC",
             "ModifyTime DESC", "ReplyTime ASC", "ReplyTime DESC"};
     private final TopicMapper topicMapper;
-    private final UserService userService;
 
     @Autowired
-    public TopicService(TopicMapper topicMapper, UserService userService) {
+    public TopicService(TopicMapper topicMapper) {
         this.topicMapper = topicMapper;
-        this.userService = userService;
     }
 
-    public ResultJson<?> addTopic(Topic topic) {
+    public boolean addTopic(Topic topic) {
         int success = topicMapper.insertSelective(topic);
-        if (success == 1) {
-            userService.updateTopicNum(topic.getUserid());
-        }
-        return new ResultJson<>(HttpStatus.OK, success == 1 ? "发布成功" : "发布失败");
+        return success == 1;
     }
 
     public List<Topic> getTopicsList(int page, Integer order, int sectionId) {
@@ -81,5 +75,37 @@ public class TopicService {
         topic.setId(topicId);
         topic.setReplytime(time);
         topicMapper.updateByPrimaryKeySelective(topic);
+    }
+
+    public void updateAvatar(int userId, String authorAvatar) {
+        TopicExample example = new TopicExample();
+        example.or().andUseridEqualTo(userId);
+        Topic topic = new Topic();
+        topic.setAuthoravatar(authorAvatar);
+        topicMapper.updateByExampleSelective(topic, example);
+    }
+
+    public void updateAuthor(int userId, String author) {
+        TopicExample example = new TopicExample();
+        example.or().andUseridEqualTo(userId);
+        Topic topic = new Topic();
+        topic.setAuthor(author);
+        topicMapper.updateByExampleSelective(topic, example);
+    }
+
+    public List<Topic> getUserTopic(int userId) {
+        TopicExample example = new TopicExample();
+        example.or().andUseridEqualTo(userId);
+        return topicMapper.selectByExample(example);
+    }
+
+    public boolean deleteTopic(int topicId) {
+        int result = topicMapper.deleteByPrimaryKey(topicId);
+        return result == 1;
+    }
+
+    public boolean updateTopic(Topic topic) {
+        int result = topicMapper.updateByPrimaryKeySelective(topic);
+        return result == 1;
     }
 }

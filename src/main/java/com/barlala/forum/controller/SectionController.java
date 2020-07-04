@@ -1,9 +1,9 @@
 package com.barlala.forum.controller;
 
-import com.barlala.forum.service.ResultJson;
+import com.barlala.forum.service.Result;
+import com.barlala.forum.service.ResultUtil;
 import com.barlala.forum.service.SectionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,8 +21,8 @@ public class SectionController {
         this.sectionService = sectionService;
     }
 
-    @GetMapping(value = "/getSections")
-    public ResultJson<?> getSections() {
-        return new ResultJson<>(HttpStatus.OK, sectionService.getSections());
+    @GetMapping(value = "/api/getSections")
+    public Result<?> getSections() {
+        return ResultUtil.success(sectionService.getSections());
     }
 }
