@@ -92,7 +92,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/api/getUserDetail")
+    @GetMapping("/api/userDetail")
     public Result<?> getUserDetail(@CookieValue(value = "jwt") String jwt) {
         int userId = authenticationService.verifyToken(jwt);
         if (userId == -1) {
@@ -101,17 +101,17 @@ public class UserController {
         return ResultUtil.success(userService.getUserWithoutPassword(userId));
     }
 
-    @PostMapping("/api/usernameCheck")
+    @GetMapping("/api/usernameCheck")
     public Result<?> usernameRepetition(@RequestParam(value = "username") String username) {
         return ResultUtil.success(!userService.isUsernameRepeat(username));
     }
 
-    @PostMapping("/api/emailCheck")
+    @GetMapping("/api/emailCheck")
     public Result<?> emailRepetition(@RequestParam(value = "email") String email) {
         return ResultUtil.success(!userService.isEmailRepeat(email));
     }
 
-    @PostMapping("/api/updateAvatar")
+    @PutMapping("/api/avatar")
     public Result<?> updateAvatar(@CookieValue(value = "jwt") String jwt,
                                   @RequestParam(value = "avatarUrl") String avatarUrl,
                                   HttpServletResponse response) {
@@ -129,7 +129,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/api/updateUsername")
+    @PutMapping("/api/username")
     public Result<?> updateUsername(@CookieValue(value = "jwt") String jwt,
                                     @RequestParam(value = "username") String username,
                                     HttpServletResponse response) {
@@ -147,7 +147,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/api/updateEmail")
+    @PutMapping("/api/email")
     public Result<?> updateEmail(@CookieValue(value = "jwt") String jwt,
                                  @RequestParam(value = "email") String email) {
         int userId = authenticationService.verifyToken(jwt);
@@ -157,7 +157,7 @@ public class UserController {
         return userService.updateEmail(userId, email) ? ResultUtil.success() : ResultUtil.error();
     }
 
-    @PostMapping("/api/updatePassword")
+    @PutMapping("/api/password")
     public Result<?> updatePassword(@CookieValue(value = "jwt") String jwt,
                                     @RequestParam(value = "password") String password) {
         int userId = authenticationService.verifyToken(jwt);
@@ -167,7 +167,7 @@ public class UserController {
         return userService.updatePassword(userId, password) ? ResultUtil.success() : ResultUtil.error();
     }
 
-    @PostMapping("/api/checkPassword")
+    @GetMapping("/api/passwordConfirmation")
     public Result<?> checkPassword(@CookieValue(value = "jwt") String jwt,
                                    @RequestParam(value = "password") String password) {
         int userId = authenticationService.verifyToken(jwt);

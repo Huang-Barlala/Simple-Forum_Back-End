@@ -23,6 +23,7 @@ public class TopicController {
     private final TopicService topicService;
     private final ReplyService replyService;
     private final UserService userService;
+    private final String ADMIN = "admin";
 
     @Autowired
     public TopicController(AuthenticationService authenticationService,
@@ -38,7 +39,7 @@ public class TopicController {
     }
 
 
-    @PostMapping(value = "/api/addTopic")
+    @PostMapping(value = "/api/topic")
     public Result<?> addTopic(@CookieValue String jwt,
                               @RequestParam(value = "sectionId") int sectionId,
                               @NotBlank(message = "标题不能为空") @RequestParam(value = "title") String title,
@@ -69,10 +70,10 @@ public class TopicController {
         return ResultUtil.error();
     }
 
-    @GetMapping(value = "/api/getTopicList")
+    @GetMapping(value = "/api/topicList")
     public Result<?> getTopicList(@RequestParam(value = "page", required = false) Integer page,
                                   @RequestParam(value = "sectionId") int sectionId,
-                                  @RequestParam(value = "order", required = false) Integer order) {
+                                  @RequestParam(value = "order", required = false) String order) {
         if (!sectionService.isSectionInSectionList(sectionId)) {
             return ResultUtil.error("分区不存在");
         }
@@ -81,6 +82,9 @@ public class TopicController {
         }
         if (topicService.isPageOutOfRange(sectionId, page)) {
             return ResultUtil.error("页数超出范围");
+        }
+        if (order == null) {
+            order = "id";
         }
         List<Topic> topicList = topicService.getTopicsList(page, order, sectionId);
         return ResultUtil.success(topicList);
@@ -91,7 +95,7 @@ public class TopicController {
         return ResultUtil.success(topicService.topicPages(sectionId));
     }
 
-    @GetMapping(value = "/api/getTopic")
+    @GetMapping(value = "/api/topic")
     public Result<?> getTopic(@RequestParam(value = "topicId") int topicId) {
         Topic topic = topicService.getTopic(topicId);
         if (topic == null) {
@@ -100,7 +104,7 @@ public class TopicController {
         return ResultUtil.success(topic);
     }
 
-    @GetMapping("/api/getUserTopicInfo")
+    @GetMapping("/api/userTopicInfo")
     public Result<?> getUserTopicInfo(@CookieValue String jwt) {
         int userId = authenticationService.verifyToken(jwt);
         if (userId == -1) {
@@ -109,14 +113,14 @@ public class TopicController {
         return ResultUtil.success(topicService.getUserTopic(userId));
     }
 
-    @PostMapping("/api/deleteTopic")
+    @DeleteMapping("/api/topic")
     public Result<?> deleteTopic(@CookieValue String jwt,
                                  @RequestParam(value = "topicId") int topicId) {
         int userId = authenticationService.verifyToken(jwt);
         if (userId == -1) {
             return ResultUtil.error("权限校验失败");
         }
-        boolean isDelete = "admin".equals(authenticationService.getPermission(jwt)) || userId == topicService.getTopic(topicId).getUserid();
+        boolean isDelete = ADMIN.equals(authenticationService.getPermission(jwt)) || userId == topicService.getTopic(topicId).getUserid();
         if (isDelete) {
             if (topicService.deleteTopic(topicId)) {
                 replyService.deleteReplyByTopic(topicId);
@@ -128,27 +132,65 @@ public class TopicController {
         return ResultUtil.error("无删除权限");
     }
 
-    @PostMapping("/api/modifyTopic")
+    @PutMapping("/api/topic")
     public Result<?> modifyTopic(@CookieValue String jwt,
                                  @RequestParam(value = "topicId") int topicId,
                                  @NotBlank(message = "标题不能为空") @RequestParam(value = "title") String title,
-                                 @NotBlank(message = "内容不能为空") @RequestParam(value = "content") String content) {
+                                 @NotBlank(message = "内容不能为空") @RequestParam(value = "content") String content,
+                                 @RequestParam(value = "sectionId", required = false) Integer sectionId) {
         int userId = authenticationService.verifyToken(jwt);
         if (userId == -1) {
             return ResultUtil.error("权限校验失败");
         }
-        boolean isUpdate = userId == topicService.getTopic(topicId).getUserid();
+        boolean isUpdate = userId == topicService.getTopic(topicId).getUserid() || ADMIN.equals(authenticationService.getPermission(jwt));
         if (isUpdate) {
             Topic topic = new Topic();
             topic.setId(topicId);
             topic.setTitle(title);
             topic.setContent(content);
             topic.setModifytime(new Date());
+            topic.setSectionid(sectionId);
             if (topicService.updateTopic(topic)) {
                 return ResultUtil.success();
             }
             return ResultUtil.error("修改失败");
         }
         return ResultUtil.error("无修改权限");
+    }
+
+    @GetMapping("/api/allTopic")
+    public Result<?> getAllTopic(@CookieValue String jwt,
+                                 @RequestParam(value = "page", required = false) Integer page,
+                                 @RequestParam(value = "order", required = false) String order,
+                                 @RequestParam(value = "desc", required = false) Boolean desc,
+                                 @RequestParam(value = "search", required = false) String search) {
+        int userId = authenticationService.verifyToken(jwt);
+        if (userId == -1 || !ADMIN.equals(authenticationService.getPermission(jwt))) {
+            return ResultUtil.error("权限校验失败");
+        }
+        if (page == null) {
+            page = 1;
+        }
+        if (page > topicService.getAllTopicPageNum(search)) {
+            return ResultUtil.error("页数超出范围");
+        }
+        if (order == null) {
+            order = "id";
+        }
+        if (desc == null) {
+            desc = false;
+        }
+        return ResultUtil.success(topicService.getAllTopicList(page, order, desc, search));
+
+    }
+
+    @GetMapping("/api/allTopicPageNum")
+    public Result<?> getAllTopicPageNum(@CookieValue String jwt,
+                                        @RequestParam(value = "search", required = false) String search) {
+        int userId = authenticationService.verifyToken(jwt);
+        if (userId == -1 || !ADMIN.equals(authenticationService.getPermission(jwt))) {
+            return ResultUtil.error("权限校验失败");
+        }
+        return ResultUtil.success(topicService.getAllTopicPageNum(search));
     }
 }

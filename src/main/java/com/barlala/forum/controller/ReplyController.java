@@ -32,7 +32,7 @@ public class ReplyController {
         this.topicService = topicService;
     }
 
-    @PostMapping(value = "/api/addReply")
+    @PostMapping(value = "/api/reply")
     public Result<?> addReply(@CookieValue(value = "jwt") String jwt,
                               @RequestParam(value = "topicId") int topicId,
                               @NotBlank(message = "回复内容不能为空") @RequestParam(value = "content") String content) {
@@ -62,7 +62,7 @@ public class ReplyController {
         return ResultUtil.error();
     }
 
-    @GetMapping(value = "/api/getReply")
+    @GetMapping(value = "/api/reply")
     public Result<?> getReply(@RequestParam(value = "topicId") int topicId,
                               @RequestParam(value = "page") int page) {
         if (!topicService.isTopicExist(topicId)) {
@@ -81,7 +81,7 @@ public class ReplyController {
         return ResultUtil.success(replyService.replyPages(topicId));
     }
 
-    @PostMapping("/api/modifyReply")
+    @PutMapping("/api/reply")
     public Result<?> modifyTopic(@CookieValue String jwt,
                                  @RequestParam(value = "replyId") int replyId,
                                  @NotBlank(message = "内容不能为空") @RequestParam(value = "content") String content) {

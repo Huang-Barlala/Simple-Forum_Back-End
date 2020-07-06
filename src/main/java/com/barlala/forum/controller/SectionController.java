@@ -21,7 +21,7 @@ public class SectionController {
         this.sectionService = sectionService;
     }
 
-    @GetMapping(value = "/api/getSections")
+    @GetMapping(value = "/api/sections")
     public Result<?> getSections() {
         return ResultUtil.success(sectionService.getSections());
     }

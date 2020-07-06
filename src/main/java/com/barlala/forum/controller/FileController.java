@@ -24,7 +24,7 @@ public class FileController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
-    @PostMapping(value = "/api/uploadImage")
+    @PostMapping(value = "/api/image")
     @ResponseBody
     public Result<?> uploadImage(@RequestParam(value = "file") MultipartFile file) {
         if (file.isEmpty()) {
@@ -46,7 +46,7 @@ public class FileController {
         return ResultUtil.error("上传失败");
     }
 
-    @RequestMapping(value = "/api/image/{imageName}", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_GIF_VALUE, MediaType.IMAGE_PNG_VALUE})
+    @GetMapping(value = "/api/image/{imageName}", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_GIF_VALUE, MediaType.IMAGE_PNG_VALUE})
     @ResponseBody
     public byte[] getImage(@PathVariable("imageName") String imageName) {
         String path = "files/";
