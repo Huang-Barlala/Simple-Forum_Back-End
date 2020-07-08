@@ -3,6 +3,7 @@ package com.barlala.forum.service;
 import com.barlala.forum.dao.UserMapper;
 import com.barlala.forum.entity.User;
 import com.barlala.forum.entity.UserExample;
+import com.github.pagehelper.PageHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -67,33 +68,13 @@ public class UserService {
         return success == 1;
     }
 
-    public String getUsername(int userId) {
-        User user = userMapper.selectByPrimaryKey(userId);
-        return user == null ? "" : user.getUsername();
-    }
-
     public void updateTopicNum(int userId, boolean plus) {
         User user = userMapper.selectByPrimaryKey(userId);
-        int topicNum = user.getTopicnum() + (plus ? 1 : -1);
-        user.setTopicnum(topicNum);
+        int topicNum = user.getTopicNum() + (plus ? 1 : -1);
+        user.setTopicNum(topicNum);
         userMapper.updateByPrimaryKey(user);
     }
 
-    public boolean updateAvatarUrl(int userId, String avatarUrl) {
-        User user = new User();
-        user.setId(userId);
-        user.setAvatarurl(avatarUrl);
-        int result = userMapper.updateByPrimaryKeySelective(user);
-        return result == 1;
-    }
-
-    public boolean updateUsername(int userId, String username) {
-        User user = new User();
-        user.setId(userId);
-        user.setUsername(username);
-        int result = userMapper.updateByPrimaryKeySelective(user);
-        return result == 1;
-    }
 
     public User getUserWithoutPassword(int userId) {
         User user = userMapper.selectByPrimaryKey(userId);
@@ -101,22 +82,6 @@ public class UserService {
         return user;
     }
 
-
-    public boolean updateEmail(int userId, String email) {
-        User user = new User();
-        user.setId(userId);
-        user.setEmail(email);
-        int result = userMapper.updateByPrimaryKeySelective(user);
-        return result == 1;
-    }
-
-    public boolean updatePassword(int userId, String password) {
-        User user = new User();
-        user.setId(userId);
-        user.setPassword(password);
-        int result = userMapper.updateByPrimaryKeySelective(user);
-        return result == 1;
-    }
 
     public boolean checkPassword(int userId, String password) {
         User user = userMapper.selectByPrimaryKey(userId);
@@ -126,5 +91,57 @@ public class UserService {
         return password.equals(user.getPassword());
     }
 
+    private UserExample orderExample(String orderBy, boolean desc) {
+        UserExample example = new UserExample();
+        StringBuilder clause = new StringBuilder(orderBy);
+        if (desc) {
+            clause.append(" DESC");
+        } else {
+            clause.append(" ASC");
+        }
+        example.setOrderByClause(clause.toString());
+        return example;
+    }
 
+    public long getAllUserPageNum(String search) {
+        UserExample example = new UserExample();
+        if (search != null && !search.equals("")) {
+            example.or().andUsernameLike("%" + search + "%");
+            example.or().andEmailLike("%" + search + "%");
+            try {
+                int id = Integer.parseInt(search);
+                example.or().andIdEqualTo(id);
+                example.or().andTopicNumEqualTo(id);
+            } catch (NumberFormatException ignore) {
+            }
+        }
+        long num = userMapper.countByExample(example);
+        return num / 20 + (num % 20 == 0 ? 0 : 1);
+    }
+
+    public List<User> getAllUserList(int page, String order, boolean desc, String search) {
+        UserExample example = orderExample(order, desc);
+        if (search != null && !search.equals("")) {
+            example.or().andUsernameLike("%" + search + "%");
+            example.or().andEmailLike("%" + search + "%");
+            try {
+                int id = Integer.parseInt(search);
+                example.or().andIdEqualTo(id);
+                example.or().andTopicNumEqualTo(id);
+            } catch (NumberFormatException ignore) {
+            }
+        }
+        PageHelper.startPage(page, 20);
+        return userMapper.selectByExample(example);
+    }
+
+    public boolean updateUser(User user){
+        int result=userMapper.updateByPrimaryKeySelective(user);
+        return result==1;
+    }
+
+    public boolean deleteUser(Integer id) {
+        int result=userMapper.deleteByPrimaryKey(id);
+        return result==1;
+    }
 }

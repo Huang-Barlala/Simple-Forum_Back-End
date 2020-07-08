@@ -20,10 +20,18 @@
 
         <javaClientGenerator targetPackage="com.barlala.forum.dao" type="XMLMAPPER" targetProject="src/main/java" />
 
-        <table tableName="Reply" />
-        <table tableName="Section" />
-        <table tableName="Topic" />
-        <table tableName="User" />
+        <table tableName="Reply">
+            <property name="useActualColumnNames" value="true" />
+        </table>
+        <table tableName="Section">
+            <property name="useActualColumnNames" value="true" />
+        </table>
+        <table tableName="Topic">
+            <property name="useActualColumnNames" value="true" />
+        </table>
+        <table tableName="User">
+            <property name="useActualColumnNames" value="true" />
+        </table>
 
     </context>
 

@@ -16,8 +16,8 @@ import java.util.List;
  */
 @Service
 public class SectionService {
-    public List<Section> sectionList = new ArrayList<>();
     private final SectionMapper sectionMapper;
+    public List<Section> sectionList = new ArrayList<>();
 
     @Autowired
     public SectionService(SectionMapper sectionMapper) {
@@ -41,11 +41,28 @@ public class SectionService {
         return false;
     }
 
-    public List<Section> getSections(){
-        if (sectionList.isEmpty()){
+    public List<Section> getSections() {
+        if (sectionList.isEmpty()) {
             updateSectionList();
         }
         return sectionList;
     }
 
+    public boolean updateSection(Section section) {
+        int result = sectionMapper.updateByPrimaryKey(section);
+        this.updateSectionList();
+        return result == 1;
+    }
+
+    public boolean insertSection(Section section) {
+        int result = sectionMapper.insert(section);
+        this.updateSectionList();
+        return result == 1;
+    }
+
+    public boolean deleteSection(int id) {
+        int result = sectionMapper.deleteByPrimaryKey(id);
+        this.updateSectionList();
+        return result == 1;
+    }
 }

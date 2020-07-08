@@ -52,17 +52,17 @@ public class TopicController {
             return ResultUtil.error("板块错误");
         }
         Topic topic = new Topic();
-        topic.setSectionid(sectionId);
-        topic.setUserid(userId);
+        topic.setSectionId(sectionId);
+        topic.setUserId(userId);
         topic.setTitle(title);
         content = content.replaceAll("src=\"api/image/", "src=\"/api/image/");
         topic.setContent(content);
         Date now = new Date();
-        topic.setCreatetime(now);
-        topic.setModifytime(now);
-        topic.setReplytime(now);
+        topic.setCreateTime(now);
+        topic.setModifyTime(now);
+        topic.setReplyTime(now);
         topic.setAuthor(authenticationService.getUsername(jwt));
-        topic.setAuthoravatar(authenticationService.getAvatar(jwt));
+        topic.setAuthorAvatar(authenticationService.getAvatar(jwt));
         if (topicService.addTopic(topic)) {
             userService.updateTopicNum(userId, true);
             return ResultUtil.success();
@@ -96,8 +96,8 @@ public class TopicController {
     }
 
     @GetMapping(value = "/api/topic")
-    public Result<?> getTopic(@RequestParam(value = "topicId") int topicId) {
-        Topic topic = topicService.getTopic(topicId);
+    public Result<?> getTopic(@RequestParam(value = "id") int id) {
+        Topic topic = topicService.getTopic(id);
         if (topic == null) {
             return ResultUtil.error("Topic不存在");
         }
@@ -115,15 +115,15 @@ public class TopicController {
 
     @DeleteMapping("/api/topic")
     public Result<?> deleteTopic(@CookieValue String jwt,
-                                 @RequestParam(value = "topicId") int topicId) {
+                                 @RequestParam(value = "id") int id) {
         int userId = authenticationService.verifyToken(jwt);
         if (userId == -1) {
             return ResultUtil.error("权限校验失败");
         }
-        boolean isDelete = ADMIN.equals(authenticationService.getPermission(jwt)) || userId == topicService.getTopic(topicId).getUserid();
+        boolean isDelete = ADMIN.equals(authenticationService.getPermission(jwt)) || userId == topicService.getTopic(id).getUserId();
         if (isDelete) {
-            if (topicService.deleteTopic(topicId)) {
-                replyService.deleteReplyByTopic(topicId);
+            if (topicService.deleteTopic(id)) {
+                replyService.deleteReplyByTopic(id);
                 userService.updateTopicNum(userId, false);
                 return ResultUtil.success();
             }
@@ -134,7 +134,7 @@ public class TopicController {
 
     @PutMapping("/api/topic")
     public Result<?> modifyTopic(@CookieValue String jwt,
-                                 @RequestParam(value = "topicId") int topicId,
+                                 @RequestParam(value = "id") int id,
                                  @NotBlank(message = "标题不能为空") @RequestParam(value = "title") String title,
                                  @NotBlank(message = "内容不能为空") @RequestParam(value = "content") String content,
                                  @RequestParam(value = "sectionId", required = false) Integer sectionId) {
@@ -142,14 +142,14 @@ public class TopicController {
         if (userId == -1) {
             return ResultUtil.error("权限校验失败");
         }
-        boolean isUpdate = userId == topicService.getTopic(topicId).getUserid() || ADMIN.equals(authenticationService.getPermission(jwt));
+        boolean isUpdate = userId == topicService.getTopic(id).getUserId() || ADMIN.equals(authenticationService.getPermission(jwt));
         if (isUpdate) {
             Topic topic = new Topic();
-            topic.setId(topicId);
+            topic.setId(id);
             topic.setTitle(title);
             topic.setContent(content);
-            topic.setModifytime(new Date());
-            topic.setSectionid(sectionId);
+            topic.setModifyTime(new Date());
+            topic.setSectionId(sectionId);
             if (topicService.updateTopic(topic)) {
                 return ResultUtil.success();
             }
@@ -181,7 +181,6 @@ public class TopicController {
             desc = false;
         }
         return ResultUtil.success(topicService.getAllTopicList(page, order, desc, search));
-
     }
 
     @GetMapping("/api/allTopicPageNum")

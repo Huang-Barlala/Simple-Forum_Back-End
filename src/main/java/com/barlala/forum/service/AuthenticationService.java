@@ -31,7 +31,7 @@ public class AuthenticationService {
                     .withExpiresAt(new Date(System.currentTimeMillis() + 86400000))
                     .withClaim("id", user.getId())
                     .withClaim("username", user.getUsername())
-                    .withClaim("avatar", user.getAvatarurl())
+                    .withClaim("avatar", user.getAvatarUrl())
                     .withClaim("permission", user.getPermission())
                     .sign(Algorithm.HMAC256(SECRET));
         } catch (JWTCreationException ignored) {

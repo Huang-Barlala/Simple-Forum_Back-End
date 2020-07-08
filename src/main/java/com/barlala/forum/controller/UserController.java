@@ -28,6 +28,7 @@ public class UserController {
     private final AuthenticationService authenticationService;
     private final TopicService topicService;
     private final ReplyService replyService;
+    private final String ADMIN = "admin";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -81,9 +82,9 @@ public class UserController {
             }
             user.setEmail(email);
         }
-        user.setCreatetime(new Date());
-        user.setTopicnum(0);
-        user.setAvatarurl("/api/image/5b6d5b39274f0_610.jpg");
+        user.setCreateTime(new Date());
+        user.setTopicNum(0);
+        user.setAvatarUrl("/api/image/5b6d5b39274f0_610.jpg");
         user.setPermission("user");
         if (userService.insertUser(user)) {
             return ResultUtil.success();
@@ -92,7 +93,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/api/userDetail")
+    @GetMapping("/api/user")
     public Result<?> getUserDetail(@CookieValue(value = "jwt") String jwt) {
         int userId = authenticationService.verifyToken(jwt);
         if (userId == -1) {
@@ -100,6 +101,70 @@ public class UserController {
         }
         return ResultUtil.success(userService.getUserWithoutPassword(userId));
     }
+
+    @PutMapping("/api/user")
+    public Result<?> updateUser(@CookieValue String jwt,
+                                @RequestParam(value = "id") Integer id,
+                                @RequestParam(value = "username", required = false) String username,
+                                @RequestParam(value = "email", required = false) String email,
+                                @RequestParam(value = "avatarUrl", required = false) String avatarUrl,
+                                @RequestParam(value = "password", required = false) String password,
+                                HttpServletResponse response) {
+        int userId = authenticationService.verifyToken(jwt);
+        if (userId != id && !ADMIN.equals(authenticationService.getPermission(jwt))) {
+            return ResultUtil.error("权限校验失败");
+        }
+        User user = new User();
+        if (username != null && username.equals("")) {
+            username = null;
+        }
+        if (email != null && email.equals("")) {
+            email = null;
+        }
+        if (avatarUrl != null && avatarUrl.equals("")) {
+            avatarUrl = null;
+        }
+        if (password != null && password.equals("")) {
+            password = null;
+        }
+        user.setId(id);
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setAvatarUrl(avatarUrl);
+        user.setPassword(password);
+        if (userService.updateUser(user)) {
+            if (username != null) {
+                authenticationService.refreshCookie(userService.getUserWithoutPassword(userId), response);
+                topicService.updateAuthor(id, username);
+                replyService.updateAuthor(id, username);
+            }
+            if (avatarUrl != null) {
+                authenticationService.refreshCookie(userService.getUserWithoutPassword(userId), response);
+                topicService.updateAvatar(id, avatarUrl);
+                replyService.updateAvatar(id, avatarUrl);
+            }
+            return ResultUtil.success();
+        }
+        return ResultUtil.error();
+    }
+
+    @DeleteMapping("/api/user")
+    public Result<?> deleteUser(@CookieValue String jwt,
+                                @RequestParam(value = "id") Integer id) {
+        int userId = authenticationService.verifyToken(jwt);
+        if (userId != id && !ADMIN.equals(authenticationService.getPermission(jwt))) {
+            return ResultUtil.error("权限校验失败");
+        }
+        if (userService.deleteUser(id)) {
+            topicService.updateAuthor(id, "(已注销)");
+            replyService.updateAuthor(id, "(已注销)");
+            topicService.updateAvatar(id, "/api/image/5b6d5b39274f0_610.jpg");
+            replyService.updateAvatar(id, "/api/image/5b6d5b39274f0_610.jpg");
+            return ResultUtil.success();
+        }
+        return ResultUtil.error();
+    }
+
 
     @GetMapping("/api/usernameCheck")
     public Result<?> usernameRepetition(@RequestParam(value = "username") String username) {
@@ -111,61 +176,6 @@ public class UserController {
         return ResultUtil.success(!userService.isEmailRepeat(email));
     }
 
-    @PutMapping("/api/avatar")
-    public Result<?> updateAvatar(@CookieValue(value = "jwt") String jwt,
-                                  @RequestParam(value = "avatarUrl") String avatarUrl,
-                                  HttpServletResponse response) {
-        int userId = authenticationService.verifyToken(jwt);
-        if (userId == -1) {
-            return ResultUtil.error("权限校验失败");
-        }
-        if (userService.updateAvatarUrl(userId, avatarUrl)) {
-            authenticationService.refreshCookie(userService.getUserWithoutPassword(userId), response);
-            topicService.updateAvatar(userId, avatarUrl);
-            replyService.updateAvatar(userId, avatarUrl);
-            return ResultUtil.success();
-        } else {
-            return ResultUtil.error();
-        }
-    }
-
-    @PutMapping("/api/username")
-    public Result<?> updateUsername(@CookieValue(value = "jwt") String jwt,
-                                    @RequestParam(value = "username") String username,
-                                    HttpServletResponse response) {
-        int userId = authenticationService.verifyToken(jwt);
-        if (userId == -1) {
-            return ResultUtil.error("权限校验失败");
-        }
-        if (userService.updateUsername(userId, username)) {
-            authenticationService.refreshCookie(userService.getUserWithoutPassword(userId), response);
-            topicService.updateAuthor(userId, username);
-            replyService.updateAuthor(userId, username);
-            return ResultUtil.success();
-        } else {
-            return ResultUtil.error();
-        }
-    }
-
-    @PutMapping("/api/email")
-    public Result<?> updateEmail(@CookieValue(value = "jwt") String jwt,
-                                 @RequestParam(value = "email") String email) {
-        int userId = authenticationService.verifyToken(jwt);
-        if (userId == -1) {
-            return ResultUtil.error("权限校验失败");
-        }
-        return userService.updateEmail(userId, email) ? ResultUtil.success() : ResultUtil.error();
-    }
-
-    @PutMapping("/api/password")
-    public Result<?> updatePassword(@CookieValue(value = "jwt") String jwt,
-                                    @RequestParam(value = "password") String password) {
-        int userId = authenticationService.verifyToken(jwt);
-        if (userId == -1) {
-            return ResultUtil.error("权限校验失败");
-        }
-        return userService.updatePassword(userId, password) ? ResultUtil.success() : ResultUtil.error();
-    }
 
     @GetMapping("/api/passwordConfirmation")
     public Result<?> checkPassword(@CookieValue(value = "jwt") String jwt,
@@ -175,5 +185,40 @@ public class UserController {
             return ResultUtil.error("权限校验失败");
         }
         return userService.checkPassword(userId, password) ? ResultUtil.success() : ResultUtil.error();
+    }
+
+    @GetMapping("/api/allUserPageNum")
+    public Result<?> getAllUserPageNum(@CookieValue String jwt,
+                                       @RequestParam(value = "search", required = false) String search) {
+        int userId = authenticationService.verifyToken(jwt);
+        if (userId == -1 || !ADMIN.equals(authenticationService.getPermission(jwt))) {
+            return ResultUtil.error("权限校验失败");
+        }
+        return ResultUtil.success(userService.getAllUserPageNum(search));
+    }
+
+    @GetMapping("/api/allUser")
+    public Result<?> getAllUser(@CookieValue String jwt,
+                                @RequestParam(value = "page", required = false) Integer page,
+                                @NotBlank @RequestParam(value = "order", required = false) String order,
+                                @RequestParam(value = "desc", required = false) Boolean desc,
+                                @RequestParam(value = "search", required = false) String search) {
+        int userId = authenticationService.verifyToken(jwt);
+        if (userId == -1 || !ADMIN.equals(authenticationService.getPermission(jwt))) {
+            return ResultUtil.error("权限校验失败");
+        }
+        if (page == null) {
+            page = 1;
+        }
+        if (page > userService.getAllUserPageNum(search)) {
+            return ResultUtil.error("页数超出范围");
+        }
+        if (order == null) {
+            order = "id";
+        }
+        if (desc == null) {
+            desc = false;
+        }
+        return ResultUtil.success(userService.getAllUserList(page, order, desc, search));
     }
 }

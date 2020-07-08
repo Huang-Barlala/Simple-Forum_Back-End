@@ -32,7 +32,7 @@ public class TopicService {
 
     public List<Topic> getTopicsList(int page, String order, int sectionId) {
         TopicExample example = orderExample(order, false);
-        example.or().andSectionidEqualTo(sectionId);
+        example.or().andSectionIdEqualTo(sectionId);
         PageHelper.startPage(page, 20);
         return topicMapper.selectByExampleWithBLOBs(example);
     }
@@ -54,7 +54,7 @@ public class TopicService {
 
     public long topicPages(int sectionId) {
         TopicExample example = new TopicExample();
-        example.or().andSectionidEqualTo(sectionId);
+        example.or().andSectionIdEqualTo(sectionId);
         long sum = topicMapper.countByExample(example);
         return sum / 20 + (sum % 20 == 0 ? 0 : 1);
     }
@@ -66,21 +66,21 @@ public class TopicService {
     public void changeReplyTime(int topicId, Date time) {
         Topic topic = new Topic();
         topic.setId(topicId);
-        topic.setReplytime(time);
+        topic.setReplyTime(time);
         topicMapper.updateByPrimaryKeySelective(topic);
     }
 
     public void updateAvatar(int userId, String authorAvatar) {
         TopicExample example = new TopicExample();
-        example.or().andUseridEqualTo(userId);
+        example.or().andUserIdEqualTo(userId);
         Topic topic = new Topic();
-        topic.setAuthoravatar(authorAvatar);
+        topic.setAuthorAvatar(authorAvatar);
         topicMapper.updateByExampleSelective(topic, example);
     }
 
     public void updateAuthor(int userId, String author) {
         TopicExample example = new TopicExample();
-        example.or().andUseridEqualTo(userId);
+        example.or().andUserIdEqualTo(userId);
         Topic topic = new Topic();
         topic.setAuthor(author);
         topicMapper.updateByExampleSelective(topic, example);
@@ -88,7 +88,7 @@ public class TopicService {
 
     public List<Topic> getUserTopic(int userId) {
         TopicExample example = new TopicExample();
-        example.or().andUseridEqualTo(userId);
+        example.or().andUserIdEqualTo(userId);
         return topicMapper.selectByExample(example);
     }
 
@@ -110,8 +110,8 @@ public class TopicService {
             try {
                 int id = Integer.parseInt(search);
                 example.or().andIdEqualTo(id);
-                example.or().andSectionidEqualTo(id);
-                example.or().andUseridEqualTo(id);
+                example.or().andSectionIdEqualTo(id);
+                example.or().andUserIdEqualTo(id);
             } catch (NumberFormatException ignore) {
             }
         }
@@ -127,8 +127,8 @@ public class TopicService {
             try {
                 int id = Integer.parseInt(search);
                 example.or().andIdEqualTo(id);
-                example.or().andSectionidEqualTo(id);
-                example.or().andUseridEqualTo(id);
+                example.or().andSectionIdEqualTo(id);
+                example.or().andUserIdEqualTo(id);
             } catch (NumberFormatException ignore) {
             }
         }
@@ -140,85 +140,13 @@ public class TopicService {
 
     private TopicExample orderExample(String orderBy, boolean desc) {
         TopicExample example = new TopicExample();
+        StringBuilder clause = new StringBuilder(orderBy);
         if (desc) {
-            switch (orderBy) {
-                case "id":
-                    example.setOrderByClause(MyClause.Id_DESC.toString());
-                    break;
-                case "sectionid":
-                    example.setOrderByClause(MyClause.SectionId_DESC.toString());
-                    break;
-                case "userid":
-                    example.setOrderByClause(MyClause.UserId_DESC.toString());
-                    break;
-                case "author":
-                    example.setOrderByClause(MyClause.Author_DESC.toString());
-                    break;
-                case "title":
-                    example.setOrderByClause(MyClause.Title_DESC.toString());
-                    break;
-                case "createtime":
-                    example.setOrderByClause(MyClause.CreateTime_DESC.toString());
-                    break;
-                case "modifytime":
-                    example.setOrderByClause(MyClause.ModifyTime_DESC.toString());
-                    break;
-                case "replytime":
-                    example.setOrderByClause(MyClause.ReplyTime_DESC.toString());
-                    break;
-                default:
-            }
+            clause.append(" DESC");
         } else {
-            switch (orderBy) {
-                case "id":
-                    example.setOrderByClause(MyClause.Id_ASC.toString());
-                    break;
-                case "sectionid":
-                    example.setOrderByClause(MyClause.SectionId_ASC.toString());
-                    break;
-                case "userid":
-                    example.setOrderByClause(MyClause.UserId_ASC.toString());
-                    break;
-                case "author":
-                    example.setOrderByClause(MyClause.Author_ASC.toString());
-                    break;
-                case "title":
-                    example.setOrderByClause(MyClause.Title_ASC.toString());
-                    break;
-                case "createtime":
-                    example.setOrderByClause(MyClause.CreateTime_ASC.toString());
-                    break;
-                case "modifytime":
-                    example.setOrderByClause(MyClause.ModifyTime_ASC.toString());
-                    break;
-                case "replytime":
-                    example.setOrderByClause(MyClause.ReplyTime_ASC.toString());
-                    break;
-                default:
-            }
+            clause.append(" ASC");
         }
+        example.setOrderByClause(clause.toString());
         return example;
-    }
-
-    enum MyClause {
-        //Topic排序用Clause
-        Id_ASC("Id ASC"), Id_DESC("Id DESC"),
-        SectionId_ASC("SectionId ASC"), SectionId_DESC("SectionId DESC"),
-        UserId_ASC("UserId ASC"), UserId_DESC("UserId DESC"),
-        Title_ASC("Title ASC"), Title_DESC("Title DESC"),
-        CreateTime_ASC("CreateTime ASC"), CreateTime_DESC("CreateTime DESC"),
-        ModifyTime_ASC("ModifyTime ASC"), ModifyTime_DESC("ModifyTime DESC"),
-        ReplyTime_ASC("ReplyTime ASC"), ReplyTime_DESC("ReplyTime DESC"),
-        Author_ASC("author ASC"), Author_DESC("author DESC");
-        private final String info;
-
-        MyClause(String s) {
-            this.info = s;
-        }
-
-        @Override
-        public String toString() {
-            return info;
-        }
     }
 }
